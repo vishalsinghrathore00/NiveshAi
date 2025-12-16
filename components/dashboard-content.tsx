@@ -41,6 +41,7 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
 
   useEffect(() => {
     const loadStocks = async () => {
+      if (!supabase) return
       setLoadingStocks(true)
       const stockPromises = POPULAR_STOCKS.slice(0, 6).map((stock) => fetchStockData(stock.symbol))
       const results = await Promise.all(stockPromises)
@@ -61,6 +62,7 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
   }, [preferences.risk_level])
 
   const savePreferences = async () => {
+    if (!supabase) return
     setSaving(true)
     try {
       const { error } = await supabase.from("user_preferences").upsert({
@@ -80,7 +82,7 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
   }
 
   const addToWatchlist = async () => {
-    if (!newSymbol.trim()) return
+    if (!newSymbol.trim() || !supabase) return
 
     setAddingToWatchlist(true)
     try {
@@ -103,6 +105,7 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
   }
 
   const removeFromWatchlist = async (assetId: string) => {
+    if (!supabase) return
     try {
       const { error } = await supabase.from("watchlist").delete().eq("user_id", user.id).eq("asset_id", assetId)
 

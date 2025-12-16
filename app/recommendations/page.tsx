@@ -5,6 +5,11 @@ import { RecommendationsContent } from "@/components/recommendations-content"
 
 export default async function RecommendationsPage() {
   const supabase = await createClient()
+
+  if (!supabase) {
+    redirect("/auth/login")
+  }
+
   const {
     data: { user },
     error,

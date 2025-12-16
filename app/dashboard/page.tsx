@@ -5,6 +5,16 @@ import { DashboardGuestContent } from "@/components/dashboard-guest-content"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+
+  if (!supabase) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <DashboardGuestContent />
+      </div>
+    )
+  }
+
   const {
     data: { user },
     error,
