@@ -1,18 +1,20 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Header } from "@/components/header"
 import { StockCard } from "@/components/stock-card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { POPULAR_STOCKS, fetchStockData, type StockData } from "@/lib/market-data"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { POPULAR_STOCKS, STOCK_SECTORS, fetchStockData, type StockData } from "@/lib/market-data"
 import { analyzeStock } from "@/lib/analysis-engine"
-import { Loader2, Search, TrendingUp } from "lucide-react"
+import { Loader2, Search, TrendingUp, Filter } from "lucide-react"
 
 export default function StocksPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedSector, setSelectedSector] = useState("All")
   const [stocksData, setStocksData] = useState<
-    (StockData & { score?: number; trend?: "bullish" | "neutral" | "bearish" })[]
+    (StockData & { score?: number; trend?: "bullish" | "neutral" | "bearish"; sector?: string })[]
   >([])
   const [loading, setLoading] = useState(true)
   const [searching, setSearching] = useState(false)
@@ -20,14 +22,16 @@ export default function StocksPage() {
   useEffect(() => {
     const loadStocks = async () => {
       setLoading(true)
-      const stockPromises = POPULAR_STOCKS.map((stock) => fetchStockData(stock.symbol))
+      const stockPromises = POPULAR_STOCKS.map((stock) => 
+        fetchStockData(stock.symbol).then(data => ({ data, sector: stock.sector }))
+      )
       const results = await Promise.all(stockPromises)
 
       const validStocks = results
-        .filter((s): s is StockData => s !== null)
-        .map((stock) => {
-          const analysis = analyzeStock(stock, "medium")
-          return { ...stock, score: analysis.totalScore, trend: analysis.trend }
+        .filter((r): r is { data: StockData; sector: string } => r.data !== null)
+        .map(({ data, sector }) => {
+          const analysis = analyzeStock(data, "medium")
+          return { ...data, score: analysis.totalScore, trend: analysis.trend, sector }
         })
 
       setStocksData(validStocks)
@@ -36,6 +40,11 @@ export default function StocksPage() {
 
     loadStocks()
   }, [])
+
+  const filteredStocks = useMemo(() => {
+    if (selectedSector === "All") return stocksData
+    return stocksData.filter(stock => stock.sector === selectedSector)
+  }, [stocksData, selectedSector])
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
@@ -49,7 +58,7 @@ export default function StocksPage() {
 
     if (result) {
       const analysis = analyzeStock(result, "medium")
-      const stockWithAnalysis = { ...result, score: analysis.totalScore, trend: analysis.trend }
+      const stockWithAnalysis = { ...result, score: analysis.totalScore, trend: analysis.trend, sector: "Other" }
 
       setStocksData((prev) => {
         const exists = prev.some((s) => s.symbol === result.symbol)
@@ -62,11 +71,20 @@ export default function StocksPage() {
     setSearchQuery("")
   }
 
+  const sectorCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: stocksData.length }
+    stocksData.forEach(stock => {
+      if (stock.sector) {
+        counts[stock.sector] = (counts[stock.sector] || 0) + 1
+      }
+    })
+    return counts
+  }, [stocksData])
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -74,11 +92,10 @@ export default function StocksPage() {
             </div>
             <h1 className="text-3xl font-bold">Indian Stocks</h1>
           </div>
-          <p className="text-muted-foreground">Explore and analyze NSE listed stocks with real-time data</p>
+          <p className="text-muted-foreground">Explore and analyze {loading ? "40+" : stocksData.length} NSE listed stocks with real-time data</p>
         </div>
 
-        {/* Search */}
-        <div className="mb-8 flex gap-3">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -92,9 +109,34 @@ export default function StocksPage() {
           <Button onClick={handleSearch} disabled={searching} className="h-11 px-6">
             {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
           </Button>
+          
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={selectedSector} onValueChange={setSelectedSector}>
+              <SelectTrigger className="w-[180px] h-11">
+                <SelectValue placeholder="Filter by sector" />
+              </SelectTrigger>
+              <SelectContent>
+                {STOCK_SECTORS.map((sector) => (
+                  <SelectItem key={sector} value={sector}>
+                    {sector} {sectorCounts[sector] ? `(${sectorCounts[sector]})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Stocks Grid */}
+        {selectedSector !== "All" && (
+          <div className="mb-6 flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Showing {filteredStocks.length} stocks in</span>
+            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">{selectedSector}</span>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedSector("All")} className="text-muted-foreground hover:text-foreground">
+              Clear filter
+            </Button>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
@@ -102,7 +144,7 @@ export default function StocksPage() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {stocksData.map((stock) => (
+            {filteredStocks.map((stock) => (
               <StockCard
                 key={stock.symbol}
                 symbol={stock.symbol}

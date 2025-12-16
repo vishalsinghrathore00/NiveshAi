@@ -19,17 +19,46 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
+  const validateForm = () => {
+    if (!email || !password || !repeatPassword) {
+      setError("All fields are required")
+      return false
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long")
+      return false
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      setError("Password must contain at least one uppercase letter")
+      return false
+    }
+
+    if (!/[0-9]/.test(password)) {
+      setError("Password must contain at least one number")
+      return false
+    }
 
     if (password !== repeatPassword) {
       setError("Passwords do not match")
+      return false
+    }
+
+    return true
+  }
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (!validateForm()) {
       setIsLoading(false)
       return
     }
+
+    const supabase = createClient()
+    setIsLoading(true)
 
     try {
       const { error } = await supabase.auth.signUp({
@@ -42,7 +71,7 @@ export default function SignUpPage() {
       if (error) throw error
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      setError(error instanceof Error ? error.message : "An error occurred during signup")
     } finally {
       setIsLoading(false)
     }

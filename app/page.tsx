@@ -40,7 +40,7 @@ export default function HomePage() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-8 text-base bg-transparent" asChild>
-                <Link href="/stocks">Explore Stocks</Link>
+                <Link href="/demo">Try Demo</Link>
               </Button>
             </div>
 
