@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { fetchStockData, type StockData, calculateRSI, getTrendClassification } from "@/lib/market-data"
 import { analyzeStock, type StockAnalysis } from "@/lib/analysis-engine"
-import { StockChart } from "@/components/stock-chart"
+import { CandlestickChart } from "@/components/candlestick-chart"
 import { RSIGauge } from "@/components/rsi-gauge"
 import {
   Loader2,
@@ -196,20 +196,10 @@ export function StockDetailContent({ symbol }: StockDetailContentProps) {
       {activeTab === "chart" && (
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold">Price Chart (1 Year)</h2>
-            <p className="text-sm text-muted-foreground">Historical price with moving averages</p>
+            <h2 className="text-lg font-semibold">Candlestick Chart with EMA Indicators</h2>
+            <p className="text-sm text-muted-foreground">Historical price with EMA 21, 50, and 200 moving averages</p>
           </div>
-          <StockChart data={stock.historicalData} ma50={stock.fiftyDayMA} ma200={stock.twoHundredDayMA} />
-          <div className="mt-4 flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-amber-500" />
-              <span className="text-muted-foreground">50-day MA: {formatCurrency(stock.fiftyDayMA)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-violet-500" />
-              <span className="text-muted-foreground">200-day MA: {formatCurrency(stock.twoHundredDayMA)}</span>
-            </div>
-          </div>
+          <CandlestickChart data={stock.historicalData} showEMA={true} height={450} />
         </div>
       )}
 

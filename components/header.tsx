@@ -45,8 +45,10 @@ export function Header() {
   }
 
   const navLinks = [
+    { href: "/demo", label: "Demo" },
     { href: "/dashboard", label: "Dashboard" },
     { href: "/stocks", label: "Stocks" },
+    { href: "/fo-crypto", label: "F&O / Crypto" },
     { href: "/sip", label: "SIP Calculator" },
     { href: "/ai-picks", label: "AI Picks" },
   ]
@@ -114,7 +116,7 @@ export function Header() {
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/auth/login">Log in</Link>
+                <Link href="/auth/login">Log In</Link>
               </Button>
               <Button size="sm" asChild>
                 <Link href="/auth/sign-up">Sign Up</Link>

@@ -29,18 +29,91 @@ export interface MutualFundData {
   cagr5Y?: number
 }
 
-// Popular Indian stocks for display
+// Popular Indian stocks for display - Expanded list with sectors
 export const POPULAR_STOCKS = [
-  { symbol: "RELIANCE.NS", name: "Reliance Industries" },
-  { symbol: "TCS.NS", name: "Tata Consultancy Services" },
-  { symbol: "HDFCBANK.NS", name: "HDFC Bank" },
-  { symbol: "INFY.NS", name: "Infosys" },
-  { symbol: "ICICIBANK.NS", name: "ICICI Bank" },
-  { symbol: "HINDUNILVR.NS", name: "Hindustan Unilever" },
-  { symbol: "SBIN.NS", name: "State Bank of India" },
-  { symbol: "BHARTIARTL.NS", name: "Bharti Airtel" },
-  { symbol: "ITC.NS", name: "ITC Limited" },
-  { symbol: "KOTAKBANK.NS", name: "Kotak Mahindra Bank" },
+  // Large Cap - IT
+  { symbol: "TCS.NS", name: "Tata Consultancy Services", sector: "IT" },
+  { symbol: "INFY.NS", name: "Infosys", sector: "IT" },
+  { symbol: "WIPRO.NS", name: "Wipro", sector: "IT" },
+  { symbol: "HCLTECH.NS", name: "HCL Technologies", sector: "IT" },
+  { symbol: "TECHM.NS", name: "Tech Mahindra", sector: "IT" },
+  
+  // Large Cap - Banking
+  { symbol: "HDFCBANK.NS", name: "HDFC Bank", sector: "Banking" },
+  { symbol: "ICICIBANK.NS", name: "ICICI Bank", sector: "Banking" },
+  { symbol: "SBIN.NS", name: "State Bank of India", sector: "Banking" },
+  { symbol: "KOTAKBANK.NS", name: "Kotak Mahindra Bank", sector: "Banking" },
+  { symbol: "AXISBANK.NS", name: "Axis Bank", sector: "Banking" },
+  { symbol: "INDUSINDBK.NS", name: "IndusInd Bank", sector: "Banking" },
+  
+  // Large Cap - Oil & Gas
+  { symbol: "RELIANCE.NS", name: "Reliance Industries", sector: "Oil & Gas" },
+  { symbol: "ONGC.NS", name: "ONGC", sector: "Oil & Gas" },
+  { symbol: "IOC.NS", name: "Indian Oil Corporation", sector: "Oil & Gas" },
+  { symbol: "BPCL.NS", name: "Bharat Petroleum", sector: "Oil & Gas" },
+  
+  // Large Cap - FMCG
+  { symbol: "HINDUNILVR.NS", name: "Hindustan Unilever", sector: "FMCG" },
+  { symbol: "ITC.NS", name: "ITC Limited", sector: "FMCG" },
+  { symbol: "NESTLEIND.NS", name: "Nestle India", sector: "FMCG" },
+  { symbol: "BRITANNIA.NS", name: "Britannia Industries", sector: "FMCG" },
+  { symbol: "DABUR.NS", name: "Dabur India", sector: "FMCG" },
+  
+  // Large Cap - Auto
+  { symbol: "MARUTI.NS", name: "Maruti Suzuki", sector: "Auto" },
+  { symbol: "TATAMOTORS.NS", name: "Tata Motors", sector: "Auto" },
+  { symbol: "M&M.NS", name: "Mahindra & Mahindra", sector: "Auto" },
+  { symbol: "BAJAJ-AUTO.NS", name: "Bajaj Auto", sector: "Auto" },
+  { symbol: "HEROMOTOCO.NS", name: "Hero MotoCorp", sector: "Auto" },
+  
+  // Large Cap - Pharma
+  { symbol: "SUNPHARMA.NS", name: "Sun Pharma", sector: "Pharma" },
+  { symbol: "DRREDDY.NS", name: "Dr Reddy's Labs", sector: "Pharma" },
+  { symbol: "CIPLA.NS", name: "Cipla", sector: "Pharma" },
+  { symbol: "DIVISLAB.NS", name: "Divi's Laboratories", sector: "Pharma" },
+  
+  // Large Cap - Telecom
+  { symbol: "BHARTIARTL.NS", name: "Bharti Airtel", sector: "Telecom" },
+  
+  // Large Cap - Metals
+  { symbol: "TATASTEEL.NS", name: "Tata Steel", sector: "Metals" },
+  { symbol: "JSWSTEEL.NS", name: "JSW Steel", sector: "Metals" },
+  { symbol: "HINDALCO.NS", name: "Hindalco Industries", sector: "Metals" },
+  
+  // Large Cap - Power
+  { symbol: "NTPC.NS", name: "NTPC", sector: "Power" },
+  { symbol: "POWERGRID.NS", name: "Power Grid Corporation", sector: "Power" },
+  { symbol: "ADANIGREEN.NS", name: "Adani Green Energy", sector: "Power" },
+  
+  // Large Cap - Others
+  { symbol: "LT.NS", name: "Larsen & Toubro", sector: "Infrastructure" },
+  { symbol: "ULTRACEMCO.NS", name: "UltraTech Cement", sector: "Cement" },
+  { symbol: "ASIANPAINT.NS", name: "Asian Paints", sector: "Paints" },
+  { symbol: "TITAN.NS", name: "Titan Company", sector: "Consumer" },
+  { symbol: "BAJFINANCE.NS", name: "Bajaj Finance", sector: "NBFC" },
+  { symbol: "BAJAJFINSV.NS", name: "Bajaj Finserv", sector: "NBFC" },
+  { symbol: "HDFCLIFE.NS", name: "HDFC Life Insurance", sector: "Insurance" },
+  { symbol: "SBILIFE.NS", name: "SBI Life Insurance", sector: "Insurance" },
+]
+
+// Stock sectors for filtering
+export const STOCK_SECTORS = [
+  "All",
+  "IT",
+  "Banking",
+  "Oil & Gas",
+  "FMCG",
+  "Auto",
+  "Pharma",
+  "Telecom",
+  "Metals",
+  "Power",
+  "Infrastructure",
+  "NBFC",
+  "Insurance",
+  "Cement",
+  "Paints",
+  "Consumer",
 ]
 
 // Popular mutual funds
