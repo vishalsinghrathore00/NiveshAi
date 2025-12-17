@@ -140,6 +140,7 @@ export function TradingChart({ data, height = 500 }: TradingChartProps) {
     if (!chartContainerRef.current || data.length === 0) return
 
     const filteredData = filterDataByTimeFrame(data, timeFrame)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     if (filteredData.length === 0) return
 
     if (chartRef.current) {
@@ -204,7 +205,7 @@ export function TradingChart({ data, height = 500 }: TradingChartProps) {
         low: d.low,
         close: d.close,
       }
-    })
+    }).sort((a, b) => a.time - b.time)
 
     if (chartType === "candlestick") {
       const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -270,7 +271,7 @@ export function TradingChart({ data, height = 500 }: TradingChartProps) {
           value: d.volume || Math.random() * 1000000,
           color: d.close >= d.open ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)",
         }
-      })
+      }).sort((a, b) => a.time - b.time)
 
       volumeSeries.setData(volumeData)
       volumeSeriesRef.current = volumeSeries
@@ -299,6 +300,8 @@ export function TradingChart({ data, height = 500 }: TradingChartProps) {
             }
           })
           .filter((d) => d.value !== null) as { time: UTCTimestamp; value: number }[]
+
+        lineData.sort((a, b) => a.time - b.time)
 
         if (lineData.length > 0) {
           const lineSeries = chart.addSeries(LineSeries, {

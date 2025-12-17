@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation"
+export const dynamic = "force-dynamic"
+
 import { createClient } from "@/lib/supabase/server"
 import { Header } from "@/components/header"
 import { RecommendationsContent } from "@/components/recommendations-content"

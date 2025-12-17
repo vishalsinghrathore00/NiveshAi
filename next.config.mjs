@@ -6,7 +6,13 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  allowedDevOrigins: ['*'],
+  allowedDevOrigins: [
+    '*.replit.dev',
+    '*.replit.app',
+    '*.pike.replit.dev',
+    '127.0.0.1',
+    'localhost',
+  ],
 }
 
 export default nextConfig
