@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { fetchStockData, type StockData, calculateRSI, getTrendClassification } from "@/lib/market-data"
 import { analyzeStock, type StockAnalysis } from "@/lib/analysis-engine"
-import { CandlestickChart } from "@/components/candlestick-chart"
+import { TradingChart } from "@/components/trading-chart"
 import { RSIGauge } from "@/components/rsi-gauge"
 import {
   Loader2,
@@ -195,11 +195,7 @@ export function StockDetailContent({ symbol }: StockDetailContentProps) {
       {/* Tab Content */}
       {activeTab === "chart" && (
         <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Candlestick Chart with EMA Indicators</h2>
-            <p className="text-sm text-muted-foreground">Historical price with EMA 21, 50, and 200 moving averages</p>
-          </div>
-          <CandlestickChart data={stock.historicalData} showEMA={true} height={450} />
+          <TradingChart data={stock.historicalData} height={500} />
         </div>
       )}
 

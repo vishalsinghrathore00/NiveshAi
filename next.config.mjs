@@ -7,12 +7,11 @@ const nextConfig = {
     unoptimized: true,
   },
   allowedDevOrigins: [
-    'localhost',
+    '*.replit.dev',
+    '*.replit.app',
+    '*.pike.replit.dev',
     '127.0.0.1',
-    '0.0.0.0',
-    '.replit.dev',
-    '.repl.co',
-    '.pike.replit.dev',
+    'localhost',
   ],
 }
 

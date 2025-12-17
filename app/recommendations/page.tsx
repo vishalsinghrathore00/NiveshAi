@@ -1,10 +1,17 @@
 import { redirect } from "next/navigation"
+export const dynamic = "force-dynamic"
+
 import { createClient } from "@/lib/supabase/server"
 import { Header } from "@/components/header"
 import { RecommendationsContent } from "@/components/recommendations-content"
 
 export default async function RecommendationsPage() {
   const supabase = await createClient()
+
+  if (!supabase) {
+    redirect("/auth/login")
+  }
+
   const {
     data: { user },
     error,

@@ -22,6 +22,8 @@ export function Header() {
   const supabase = createClient()
 
   useEffect(() => {
+    if (!supabase) return
+
     const getUser = async () => {
       const {
         data: { user },
@@ -37,10 +39,12 @@ export function Header() {
     })
 
     return () => subscription.unsubscribe()
-  }, [supabase.auth])
+  }, [supabase])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    if (supabase) {
+      await supabase.auth.signOut()
+    }
     window.location.href = "/"
   }
 
