@@ -6,13 +6,17 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  allowedDevOrigins: [
-    '*.replit.dev',
-    '*.replit.app',
-    '*.pike.replit.dev',
-    '127.0.0.1',
-    'localhost',
-  ],
+  allowedDevOrigins: ['*'],
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+        ],
+      },
+    ];
+  },
 }
 
 export default nextConfig

@@ -5,28 +5,46 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { createClient } from "@/lib/supabase/client"
-import type { User } from "@supabase/supabase-js"
 import { POPULAR_STOCKS, fetchStockData, type StockData } from "@/lib/market-data"
 import { StockCard } from "@/components/stock-card"
 import { analyzeStock } from "@/lib/analysis-engine"
 import { Loader2, TrendingUp, Settings, Eye, Plus, X } from "lucide-react"
 
+interface AuthUser {
+  id: number
+  email: string
+  firstName: string | null
+  lastName: string | null
+  profileImageUrl: string | null
+}
+
+interface UserPreferences {
+  id: number
+  userId: number
+  riskTolerance: string | null
+  investmentGoals: string[] | null
+  preferredSectors: string[] | null
+  monthlyInvestment: string | null
+}
+
+interface WatchlistItem {
+  id: number
+  userId: number
+  symbol: string
+  name: string | null
+}
+
 interface DashboardContentProps {
-  user: User
-  initialPreferences: {
-    risk_level: string
-    investment_horizon: string
-    monthly_sip_amount: number
-  } | null
-  initialWatchlist: { asset_id: string; asset_type: string }[]
+  user: AuthUser
+  initialPreferences: UserPreferences | null
+  initialWatchlist: WatchlistItem[]
 }
 
 export function DashboardContent({ user, initialPreferences, initialWatchlist }: DashboardContentProps) {
   const [preferences, setPreferences] = useState({
-    risk_level: initialPreferences?.risk_level || "medium",
-    investment_horizon: initialPreferences?.investment_horizon || "long",
-    monthly_sip_amount: initialPreferences?.monthly_sip_amount || 5000,
+    riskTolerance: initialPreferences?.riskTolerance || "moderate",
+    investmentHorizon: "long",
+    monthlyInvestment: initialPreferences?.monthlyInvestment || "5000",
   })
   const [saving, setSaving] = useState(false)
   const [stocksData, setStocksData] = useState<
@@ -37,19 +55,19 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
   const [addingToWatchlist, setAddingToWatchlist] = useState(false)
   const [watchlist, setWatchlist] = useState(initialWatchlist)
 
-  const supabase = createClient()
-
   useEffect(() => {
     const loadStocks = async () => {
-      if (!supabase) return
       setLoadingStocks(true)
       const stockPromises = POPULAR_STOCKS.slice(0, 6).map((stock) => fetchStockData(stock.symbol))
       const results = await Promise.all(stockPromises)
 
+      const riskLevel = preferences.riskTolerance === "conservative" ? "low" : 
+                        preferences.riskTolerance === "aggressive" ? "high" : "medium"
+
       const validStocks = results
         .filter((s): s is StockData => s !== null)
         .map((stock) => {
-          const analysis = analyzeStock(stock, preferences.risk_level as "low" | "medium" | "high")
+          const analysis = analyzeStock(stock, riskLevel as "low" | "medium" | "high")
           return { ...stock, score: analysis.totalScore, trend: analysis.trend }
         })
         .sort((a, b) => (b.score || 0) - (a.score || 0))
@@ -59,21 +77,19 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
     }
 
     loadStocks()
-  }, [preferences.risk_level])
+  }, [preferences.riskTolerance])
 
   const savePreferences = async () => {
-    if (!supabase) return
     setSaving(true)
     try {
-      const { error } = await supabase.from("user_preferences").upsert({
-        user_id: user.id,
-        risk_level: preferences.risk_level,
-        investment_horizon: preferences.investment_horizon,
-        monthly_sip_amount: preferences.monthly_sip_amount,
-        updated_at: new Date().toISOString(),
+      await fetch("/api/user/preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          riskTolerance: preferences.riskTolerance,
+          monthlyInvestment: preferences.monthlyInvestment,
+        }),
       })
-
-      if (error) throw error
     } catch (error) {
       console.error("Error saving preferences:", error)
     } finally {
@@ -82,21 +98,23 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
   }
 
   const addToWatchlist = async () => {
-    if (!newSymbol.trim() || !supabase) return
+    if (!newSymbol.trim()) return
 
     setAddingToWatchlist(true)
     try {
       const symbol = newSymbol.toUpperCase().includes(".NS") ? newSymbol.toUpperCase() : `${newSymbol.toUpperCase()}.NS`
 
-      const { error } = await supabase.from("watchlist").insert({
-        user_id: user.id,
-        asset_id: symbol,
-        asset_type: "stock",
+      const response = await fetch("/api/user/watchlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol }),
       })
 
-      if (error) throw error
-      setWatchlist([...watchlist, { asset_id: symbol, asset_type: "stock" }])
-      setNewSymbol("")
+      if (response.ok) {
+        const data = await response.json()
+        setWatchlist([...watchlist, data.item])
+        setNewSymbol("")
+      }
     } catch (error) {
       console.error("Error adding to watchlist:", error)
     } finally {
@@ -104,28 +122,25 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
     }
   }
 
-  const removeFromWatchlist = async (assetId: string) => {
-    if (!supabase) return
+  const removeFromWatchlist = async (id: number) => {
     try {
-      const { error } = await supabase.from("watchlist").delete().eq("user_id", user.id).eq("asset_id", assetId)
-
-      if (error) throw error
-      setWatchlist(watchlist.filter((item) => item.asset_id !== assetId))
+      await fetch(`/api/user/watchlist?id=${id}`, { method: "DELETE" })
+      setWatchlist(watchlist.filter((item) => item.id !== id))
     } catch (error) {
       console.error("Error removing from watchlist:", error)
     }
   }
 
+  const displayName = user.firstName || user.email.split("@")[0]
+
   return (
     <main className="container mx-auto px-4 py-8">
-      {/* Welcome Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-1">Welcome back</h1>
+        <h1 className="text-3xl font-bold mb-1">Welcome back, {displayName}</h1>
         <p className="text-muted-foreground">{user.email}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Preferences Card */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-2 mb-6">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-chart-4/10">
@@ -142,16 +157,16 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
                 Risk Tolerance
               </Label>
               <Select
-                value={preferences.risk_level}
-                onValueChange={(value) => setPreferences({ ...preferences, risk_level: value })}
+                value={preferences.riskTolerance}
+                onValueChange={(value) => setPreferences({ ...preferences, riskTolerance: value })}
               >
                 <SelectTrigger id="risk" className="h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low - Conservative</SelectItem>
-                  <SelectItem value="medium">Medium - Balanced</SelectItem>
-                  <SelectItem value="high">High - Aggressive</SelectItem>
+                  <SelectItem value="conservative">Conservative</SelectItem>
+                  <SelectItem value="moderate">Moderate</SelectItem>
+                  <SelectItem value="aggressive">Aggressive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -161,8 +176,8 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
                 Investment Horizon
               </Label>
               <Select
-                value={preferences.investment_horizon}
-                onValueChange={(value) => setPreferences({ ...preferences, investment_horizon: value })}
+                value={preferences.investmentHorizon}
+                onValueChange={(value) => setPreferences({ ...preferences, investmentHorizon: value })}
               >
                 <SelectTrigger id="horizon" className="h-11">
                   <SelectValue />
@@ -183,10 +198,8 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
                 <Input
                   id="sip"
                   type="number"
-                  value={preferences.monthly_sip_amount}
-                  onChange={(e) =>
-                    setPreferences({ ...preferences, monthly_sip_amount: Number.parseInt(e.target.value) || 0 })
-                  }
+                  value={preferences.monthlyInvestment}
+                  onChange={(e) => setPreferences({ ...preferences, monthlyInvestment: e.target.value })}
                   className="h-11 pl-8"
                 />
               </div>
@@ -205,7 +218,6 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
           </div>
         </div>
 
-        {/* Watchlist Card */}
         <div className="lg:col-span-2 rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-2 mb-6">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10">
@@ -238,12 +250,12 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
             <div className="flex flex-wrap gap-2">
               {watchlist.map((item) => (
                 <div
-                  key={item.asset_id}
+                  key={item.id}
                   className="group flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm font-medium"
                 >
-                  <span>{item.asset_id.replace(".NS", "")}</span>
+                  <span>{item.symbol.replace(".NS", "")}</span>
                   <button
-                    onClick={() => removeFromWatchlist(item.asset_id)}
+                    onClick={() => removeFromWatchlist(item.id)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
@@ -255,7 +267,6 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
         </div>
       </div>
 
-      {/* Top Stocks Section */}
       <div className="mt-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -263,7 +274,7 @@ export function DashboardContent({ user, initialPreferences, initialWatchlist }:
           </div>
           <div>
             <h2 className="text-xl font-bold">Top Stocks for You</h2>
-            <p className="text-sm text-muted-foreground">Based on your {preferences.risk_level} risk profile</p>
+            <p className="text-sm text-muted-foreground">Based on your {preferences.riskTolerance} risk profile</p>
           </div>
         </div>
 

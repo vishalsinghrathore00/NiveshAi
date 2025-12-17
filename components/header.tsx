@@ -1,11 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { createClient } from "@/lib/supabase/client"
-import { useEffect, useState } from "react"
-import type { User } from "@supabase/supabase-js"
+import { useAuth } from "@/hooks/use-auth"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,38 +12,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { TrendingUp, Menu, X, UserIcon, LogOut, LayoutDashboard } from "lucide-react"
+import { useState } from "react"
 
 export function Header() {
   const pathname = usePathname()
-  const [user, setUser] = useState<User | null>(null)
+  const router = useRouter()
+  const { user, isLoading, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const supabase = createClient()
-
-  useEffect(() => {
-    if (!supabase) return
-
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-    }
-    getUser()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [supabase])
 
   const handleSignOut = async () => {
-    if (supabase) {
-      await supabase.auth.signOut()
-    }
-    window.location.href = "/"
+    await logout()
+    router.push("/")
   }
 
   const navLinks = [
@@ -59,10 +36,11 @@ export function Header() {
 
   const isActive = (href: string) => pathname === href
 
+  const displayName = user?.firstName || user?.email?.split("@")[0] || "User"
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
             <TrendingUp className="h-5 w-5 text-primary-foreground" />
@@ -70,7 +48,6 @@ export function Header() {
           <span className="text-lg font-semibold">NiveshAI</span>
         </Link>
 
-        {/* Desktop Navigation */}
         <nav className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
             <Link
@@ -88,16 +65,17 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Auth Buttons */}
         <div className="hidden items-center gap-2 md:flex">
-          {user ? (
+          {isLoading ? (
+            <div className="h-7 w-7 animate-pulse rounded-full bg-muted" />
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
                     <UserIcon className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="max-w-[100px] truncate text-sm">{user.email?.split("@")[0]}</span>
+                  <span className="max-w-[100px] truncate text-sm">{displayName}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -129,7 +107,6 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
         <button
           className="flex h-10 w-10 items-center justify-center rounded-lg border border-border md:hidden"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -139,7 +116,6 @@ export function Header() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="border-t border-border bg-background p-4 md:hidden">
           <nav className="flex flex-col gap-1">
