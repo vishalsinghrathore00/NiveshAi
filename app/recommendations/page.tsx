@@ -1,32 +1,34 @@
 import { redirect } from "next/navigation"
 export const dynamic = "force-dynamic"
 
-import { createClient } from "@/lib/supabase/server"
+import { getCurrentUser } from "@/lib/auth"
 import { Header } from "@/components/header"
 import { RecommendationsContent } from "@/components/recommendations-content"
+import { db, userPreferences } from "@/lib/db"
+import { eq } from "drizzle-orm"
 
 export default async function RecommendationsPage() {
-  const supabase = await createClient()
+  const user = await getCurrentUser()
 
-  if (!supabase) {
+  if (!user) {
     redirect("/auth/login")
   }
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    redirect("/auth/login")
-  }
-
-  const { data: preferences } = await supabase.from("user_preferences").select("*").eq("user_id", user.id).single()
+  const preferences = await db.query.userPreferences.findFirst({
+    where: eq(userPreferences.userId, user.id),
+  })
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <RecommendationsContent userId={user.id} preferences={preferences} />
+      <RecommendationsContent 
+        userId={user.id.toString()} 
+        preferences={preferences ? {
+          risk_level: preferences.riskTolerance || "moderate",
+          investment_horizon: "long",
+          monthly_sip_amount: parseInt(preferences.monthlyInvestment || "5000"),
+        } : null} 
+      />
     </div>
   )
 }
